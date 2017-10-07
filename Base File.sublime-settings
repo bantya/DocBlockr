@@ -108,6 +108,8 @@
   //  *
   //  * @return  {[Type]}       description
   //  */
+  //
+  //  This setting affects only if the "jsdocs_align_tags" is set to "shallow" or "deep"
   "jsdocs_min_spaces_between_columns": 1,
 
   // indicates whether the @method tag should be added automatically
@@ -135,5 +137,12 @@
   // If set to true, typing /**<space> will open an inline docblock
   "jsdocs_quick_open_inline": true,
 
-  "jsdocs_development_mode": false
+  "jsdocs_development_mode": false,
+
+  // If the "jsdocs_align_tags" is set to no, this setting will add provided nos of spaces between the columns
+  "jsdocs_spaces_between_columns": 1,
+
+  // If set to true, it will print the function/method name before its description.
+  // Useful when the function/class method has longer doc block comment, it will help identify the function/methodname
+  "jsdocs_add_functionname_before_desc": true,
 }
