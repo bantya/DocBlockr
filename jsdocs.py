@@ -306,6 +306,13 @@ class JsdocsCommand(sublime_plugin.TextCommand):
 
     def createSnippet(self, out):
         snippet = ""
+
+        # Changed here to grab and place function name  @bantya  [25-09-2017]
+        if self.settings.get('jsdocs_add_functionname_before_desc') == True:
+            # Changed here to avoid breakage for const  @bantya  [26-09-2017]
+            if self.parser.settings.get('fnName', ''):
+                snippet += "\n " + self.prefix + self.indentSpaces + self.parser.settings['fnName']
+
         closer = self.parser.settings['commentCloser']
         if out:
             if self.settings.get('jsdocs_spacer_between_sections') == True:
@@ -357,6 +364,13 @@ class JsdocsParser(object):
         if self.viewSettings.get('jsdocs_simple_mode'):
             return None
 
+
+        # if self.settings.get('jsdocs_align_tags') == 'no':
+        if self.viewSettings.get('jsdocs_align_tags') == 'no':
+            self.spaceInBetween = " " * self.viewSettings.get('jsdocs_spaces_between_columns', 1)
+        else:
+            self.spaceInBetween = " "
+
         try:
             out = self.parseFunction(line)  # (name, args, retval, options)
             if (out):
@@ -375,21 +389,27 @@ class JsdocsParser(object):
         out = []
         if not valType:
             if not val or val == '':  # quick short circuit
+                # Changed here to adjust spaces in between columns  @bantya  [26-09-2017]
                 valType = "[type]"
             else:
                 valType = self.guessTypeFromValue(val) or self.guessTypeFromName(name) or "[type]"
         if self.inline:
-            out.append("@%s %s${1:%s}%s ${1:[description]}" % (
-                self.settings['typeTag'],
+            # Custom class property inline
+            out.append("@%s%s${1:%s}%s${1:[description]}" % ( # Custom change
+                # Changed here to adjust spaces in between columns  @bantya  [26-09-2017]
+                self.settings['typeTag'] + self.spaceInBetween,
                 "{" if self.settings['curlyTypes'] else "",
                 valType,
-                "}" if self.settings['curlyTypes'] else ""
+                # Changed here to adjust spaces in between columns  @bantya  [26-09-2017]
+                "}" if self.settings['curlyTypes'] else "" + self.spaceInBetween
             ))
         else:
+            # Custom class property multi-line
             out.append("${1:[%s description]}" % (escape(name)))
-            out.append("@%s %s${1:%s}%s" % (
+            out.append("@%s%s${1:%s}%s" % ( # Custom change
                 self.settings['typeTag'],
-                "{" if self.settings['curlyTypes'] else "",
+                "{" if self.settings['curlyTypes'] else "" + self.spaceInBetween,
+                # Changed here to adjust spaces in between columns  @bantya  [26-09-2017]
                 valType,
                 "}" if self.settings['curlyTypes'] else ""
             ))
@@ -399,7 +419,7 @@ class JsdocsParser(object):
     def getTypeInfo(self, argType, argName):
         typeInfo = ''
         if self.settings['typeInfo']:
-            typeInfo = '%s${1:%s}%s ' % (
+            typeInfo = '%s${1:%s}%s' % (
                 "{" if self.settings['curlyTypes'] else "",
                 escape(argType or self.guessTypeFromName(argName) or "[type]"),
                 "}" if self.settings['curlyTypes'] else "",
@@ -415,14 +435,16 @@ class JsdocsParser(object):
 
         extraTagAfter = self.viewSettings.get("jsdocs_extra_tags_go_after") or False
 
+        # Custom function description
         description = self.getNameOverride() or ('[%s%sdescription]' % (escape(name), ' ' if name else ''))
         if self.viewSettings.get('jsdocs_function_description'):
             out.append("${1:%s}" % description)
 
         if (self.viewSettings.get("jsdocs_autoadd_method_tag") is True):
-            out.append("@%s %s" % (
+            out.append("@%s%s" % (
                 "method",
-                escape(name)
+                # Changed here to adjust spaces in between columns  @bantya  [26-09-2017]
+                self.spaceInBetween + escape(name)
             ))
 
         if not extraTagAfter:
@@ -435,9 +457,11 @@ class JsdocsParser(object):
             for argType, argName in self.parseArgs(args):
                 typeInfo = self.getTypeInfo(argType, argName)
 
-                format_str = "@param %s%s"
+                # Changed here to adjust spaces in between columns  @bantya  [26-09-2017]
+                format_str = "@param" + self.spaceInBetween + "%s" + self.spaceInBetween + "%s"
                 if (self.viewSettings.get('jsdocs_param_description')):
-                    format_str += " ${1:[description]}"
+                    # Changed here to adjust spaces in between columns  @bantya  [26-09-2017]
+                    format_str += self.spaceInBetween + "${1:[description]}"
 
                 out.append(format_str % (
                     typeInfo,
@@ -447,10 +471,11 @@ class JsdocsParser(object):
         # return value type might be already available in some languages but
         # even then ask language specific parser if it wants it listed
         retType = self.getFunctionReturnType(name, retval)
+        # print(retType)
         if retType is not None:
             typeInfo = ''
             if self.settings['typeInfo']:
-                typeInfo = ' %s${1:%s}%s' % (
+                typeInfo = '%s${1:%s}%s' % ( # Custom change
                     "{" if self.settings['curlyTypes'] else "",
                     retType or "[type]",
                     "}" if self.settings['curlyTypes'] else ""
@@ -461,7 +486,8 @@ class JsdocsParser(object):
             ]
 
             if (self.viewSettings.get('jsdocs_return_description')):
-                format_str = "%s%s %s${1:[description]}"
+                # Changed here to adjust spaces in between columns  @bantya  [26-09-2017]
+                format_str = "%s" + self.spaceInBetween + "%s" + self.spaceInBetween + "%s${1:[description]}"
                 third_arg = ""
 
                 # the extra space here is so that the description will align with the param description
@@ -471,7 +497,8 @@ class JsdocsParser(object):
 
                 format_args.append(third_arg)
             else:
-                format_str = "%s%s"
+                # Changed here to adjust spaces in between columns  @bantya  [26-09-2017]
+                format_str = "%s" + self.spaceInBetween + "%s"
 
             out.append(format_str % tuple(format_args))
 
@@ -486,7 +513,6 @@ class JsdocsParser(object):
 
     def getFunctionReturnType(self, name, retval):
         """ returns None for no return type. False meaning unknown, or a string """
-
         if re.match("[A-Z]", name):
             # no return, but should add a class
             return None
@@ -498,7 +524,7 @@ class JsdocsParser(object):
         if re.match('[$_]?(?:is|has)($|[A-Z_])', name):  # functions starting with 'is' or 'has'
             return self.settings['bool']
 
-        return self.guessTypeFromName(name) or False
+        return self.guessTypeFromName(name) or self.guessTypeFromValue(name) or False
 
     def parseArgs(self, args):
         """
@@ -525,6 +551,7 @@ class JsdocsParser(object):
 
     def addExtraTags(self, out):
         extraTags = self.viewSettings.get('jsdocs_extra_tags', [])
+        # TODO: foreach tags apply space between columns
         if (len(extraTags) > 0):
             out.extend(extraTags)
 
@@ -659,6 +686,9 @@ class JsdocsJavascript(JsdocsParser):
         name = generatorSymbol + (groups['name1'] or groups['name2'] or '')
         args = groups['args'] or groups['args2'] or ''
 
+        # Changed here to grab and place function name  @bantya  [25-09-2017]
+        self.settings['fnName'] = name
+
         return (name, args, None)
 
     def parseVar(self, line):
@@ -777,6 +807,9 @@ class JsdocsPHP(JsdocsParser):
         )
         if not res:
             return None
+
+        # Changed here to grab and place function name  @bantya  [25-09-2017]
+        self.settings['fnName'] = res.group('name')
 
         return (res.group('name'), res.group('args'), None)
 
@@ -904,6 +937,9 @@ class JsdocsCPP(JsdocsParser):
         if not res:
             return None
 
+        # Changed here to grab and place function name  @bantya  [25-09-2017]
+        self.settings['fnName'] = res.group('name')
+
         return (res.group('name'), res.group('args'), res.group('retval'))
 
     def parseArgs(self, args):
@@ -957,6 +993,9 @@ class JsdocsCoffee(JsdocsParser):
         # grab the name out of "name1 = function name2(foo)" preferring name1
         name = res.group('name') or ''
         args = res.group('args')
+
+        # Changed here to grab and place function name  @bantya  [25-09-2017]
+        self.settings['fnName'] = name
 
         return (name, args, None)
 
@@ -1035,6 +1074,9 @@ class JsdocsActionscript(JsdocsParser):
         options = {}
         if res.group('getset') == 'set':
             options['as_setter'] = True
+
+        # Changed here to grab and place function name  @bantya  [25-09-2017]
+        self.settings['fnName'] = name
 
         return (name, args, None, options)
 
@@ -1120,6 +1162,10 @@ class JsdocsObjC(JsdocsParser):
 
             if (numGroups):
                 name += ':'
+
+        # Changed here to grab and place function name  @bantya  [25-09-2017]
+        self.settings['fnName'] = name
+
         return (name, '|||'.join(args), res.group('retval'))
 
     def parseArgs(self, args):
@@ -1185,6 +1231,9 @@ class JsdocsJava(JsdocsParser):
             throws_list.append(arg.strip().split(" ")[-1])
         throws = ",".join(throws_list)
 
+        # Changed here to grab and place function name  @bantya  [25-09-2017]
+        self.settings['fnName'] = name
+
         return (name, args, retval, throws)
 
     def parseVar(self, line):
@@ -1199,9 +1248,10 @@ class JsdocsJava(JsdocsParser):
         if throws_args != "":
             for unused, exceptionName in self.parseArgs(throws_args):
                 typeInfo = self.getTypeInfo(unused, exceptionName)
-                out.append("@throws %s%s ${1:[description]}" % (
-                    typeInfo,
-                    escape(exceptionName)
+                out.append("@throws%s%s${1:[description]}" % (
+                    # Changed here to adjust spaces in between columns  @bantya  [26-09-2017]
+                    self.spaceInBetween + typeInfo + self.spaceInBetween,
+                    self.spaceInBetween + escape(exceptionName)
                 ))
 
         return out
@@ -1279,6 +1329,9 @@ class JsdocsRust(JsdocsParser):
             return None
 
         name = res.group('name').join('')
+
+        # Changed here to grab and place function name  @bantya  [25-09-2017]
+        self.settings['fnName'] = name
 
         return (name, [])
 
@@ -1564,6 +1617,10 @@ class JsdocsTypescript(JsdocsParser):
         if not res:
             return None
         group_dict = res.groupdict()
+
+        # Changed here to grab and place function name  @bantya  [25-09-2017]
+        self.settings['fnName'] = group_dict('name')
+
         return (group_dict["name"], group_dict["args"], group_dict["retval"])
 
     def getArgType(self, arg):
