@@ -144,5 +144,5 @@
 
   // If set to true, it will print the function/method name before its description.
   // Useful when the function/class method has longer doc block comment, it will help identify the function/methodname
-  "jsdocs_add_functionname_before_desc": true,
+  "jsdocs_add_functionname_before_desc": false,
 }

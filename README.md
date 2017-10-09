@@ -274,6 +274,10 @@ You can access the configuration settings by selecting `Preferences -> Package S
 
 - `jsdocs_function_description` *(Boolean)* If true, a 'description' line will be added for functions. Default: `true`
 
+- `jsdocs_spaces_between_columns` *(Number)* If `jsdocs_align_tags` is set to `no`, this setting will use the specified number of spaces between the columns. Default: `1`
+
+- `jsdocs_add_functionname_before_desc` *(Boolean)* If true, respective function name will be added before the description of the function. Useful when you have very long function description. Default: `false`
+
 ## Contributors
 
 This package was created by [Nick Fisher][spadgos], but has many contributions from others. Please take a look at the [contributors list][contributors] to see who else should get some thanks.
